@@ -1,0 +1,9 @@
+version: "2"
+
+services:
+  app:
+    image: golang:1.6.1-alpine
+    volumes:
+      - .:/go/src/cross-pollinators-server
+    working_dir: /go/src/cross-pollinators-server
+    command: go run main.go
