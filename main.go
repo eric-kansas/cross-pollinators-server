@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/eric-kansas/cross-pollinators-server/configs"
@@ -14,7 +15,7 @@ func init() {
 }
 
 func main() {
-	fmt.Println("Hello World")
+	fmt.Printf("Server started with go version %s %s/%s\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	setupServer()
 }
 
@@ -27,12 +28,12 @@ func setupServer() {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", Hello)
+	mux.HandleFunc("/healthz", HealthzHandler)
 	httpServer.Handler = mux
 
 	log.Fatal(httpServer.ListenAndServe())
 }
 
-func HandleRequest(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintln(w, "Hello world!!")
+func HealthzHandler(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(w, "Success")
 }

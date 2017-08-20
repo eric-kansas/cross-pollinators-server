@@ -2,17 +2,16 @@ version: "2"
 
 services:
   app:
-    image: golang:1.6.1-alpine
+    build: .
+    image: golang:1.8
+    working_dir: /go/src/github.com/eric-kansas/cross-pollinators-server
     volumes:
-      - .:/go/src/cross-pollinators-server
-    working_dir: /go/src/cross-pollinators-server
+      - .:/go/src/github.com/eric-kansas/cross-pollinators-server
+    ports:
+      - '3030:3030'
     command: go run main.go
     environment:
       # Standard Environment
       AWS_ACCESS_KEY_ID:
       AWS_SECRET_ACCESS_KEY:
-      LANG:
-      TERM:
-      # Project-specific Environment
-      NEW_RELIC_LICENSE_KEY:
       PORT: '3030'
