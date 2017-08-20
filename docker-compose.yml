@@ -7,3 +7,12 @@ services:
       - .:/go/src/cross-pollinators-server
     working_dir: /go/src/cross-pollinators-server
     command: go run main.go
+    environment:
+      # Standard Environment
+      AWS_ACCESS_KEY_ID:
+      AWS_SECRET_ACCESS_KEY:
+      LANG:
+      TERM:
+      # Project-specific Environment
+      NEW_RELIC_LICENSE_KEY:
+      PORT: '3030'

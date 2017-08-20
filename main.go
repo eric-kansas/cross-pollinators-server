@@ -2,17 +2,37 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
-	"runtime"
+	"time"
+
+	"github.com/eric-kansas/cross-pollinators-server/configs"
 )
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "hello world, I'm running on %s with an %s CPU ", runtime.GOOS, runtime.GOARCH)
-
+func init() {
+	configs.Initialize()
 }
 
 func main() {
-	fmt.Print("starting server...")
-	http.HandleFunc("/", indexHandler)
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("Hello World")
+	setupServer()
+}
+
+func setupServer() {
+	httpServer := &http.Server{
+		Addr:         configs.Data.Addr,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+		IdleTimeout:  1 * time.Second,
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", Hello)
+	httpServer.Handler = mux
+
+	log.Fatal(httpServer.ListenAndServe())
+}
+
+func HandleRequest(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintln(w, "Hello world!!")
 }
