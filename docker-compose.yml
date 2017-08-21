@@ -10,8 +10,22 @@ services:
     ports:
       - '3030:3030'
     command: go run main.go
+    links:
+      - db:db # [other container]:[alias in this container]
+      # this will create environment variables in the go container
+      # with ip and port info for the postgres container
+      # also creates entries in /etc/hosts with ip info
     environment:
       # Standard Environment
       AWS_ACCESS_KEY_ID:
       AWS_SECRET_ACCESS_KEY:
       PORT: '3030'
+
+  db:
+    image: postgres:latest
+    ports:
+        - '5432:5432'
+    environment:
+      - POSTGRES_PASSWORD=pass1234
+      - POSTGRES_USER=kansas
+      - POSTGRES_DB=cross-pollinators-db

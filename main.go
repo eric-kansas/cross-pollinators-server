@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,12 +10,22 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/eric-kansas/cross-pollinators-server/configs"
+	"golang.org/x/crypto/bcrypt"
+
+	_ "github.com/lib/pq"
 )
 
 var hmacSampleSecret = []byte("my_secret_key")
 
+const (
+	dbUser = "kansas"
+	dbPass = "pass1234"
+	dbName = "cross-pollinators-db"
+)
+
 func init() {
 	configs.Initialize()
+	connectDB()
 }
 
 func main() {
@@ -33,7 +44,8 @@ func setupServer() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", HealthzHandler)
 	mux.HandleFunc("/login", LoginHandler)
-	mux.HandleFunc("/stuff", DoTheThingsHandler)
+	mux.HandleFunc("/register", RegisterHandler)
+	mux.HandleFunc("/dostuff", DoTheThingsHandler)
 	httpServer.Handler = mux
 
 	log.Fatal(httpServer.ListenAndServe())
@@ -43,17 +55,50 @@ func HealthzHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "Success")
 }
 
+func RegisterHandler(w http.ResponseWriter, req *http.Request) {
+	if req.Method != "POST" {
+		fmt.Fprintf(w, "Failed login not a POST")
+		return
+	}
+
+	req.ParseForm()
+	fmt.Println("username:", req.Form["username"])
+	fmt.Println("password:", req.Form["password"])
+	password := []byte(req.Form["password"][0])
+
+	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
+	if err != nil {
+		fmt.Fprintf(w, "Failed to hash password: %+v", err)
+		return
+	}
+
+	// Save username with hashed passedword to data base
+	fmt.Println(string(hashedPassword))
+}
+
 func LoginHandler(w http.ResponseWriter, req *http.Request) {
+	if req.Method != "POST" {
+		fmt.Fprintf(w, "Failed login not a POST")
+		return
+	}
 
-	//DO AUTH
+	req.ParseForm()
+	password := []byte(req.Form["password"][0])
 
-	// if success
+	// get HashedPassword form data based keyed off user name
+	hashedPassword := []byte("hashed-from-database")
+	// Comparing the password with the hash
+	err := bcrypt.CompareHashAndPassword(hashedPassword, password)
+	if err != nil {
+		fmt.Fprintf(w, "Failed comparing of hashed passwords: %+v", err)
+		return
+	}
 
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"foo": "bar",
-		"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+		"username": req.Form["username"],
+		"nbf":      time.Date(2017, 6, 20, 12, 0, 0, 0, time.UTC).Unix(),
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
@@ -62,6 +107,8 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "Failed to sign token error: %+v", err)
 		return
 	}
+
+	fmt.Println("tokenString:", tokenString)
 
 	cookie1 := &http.Cookie{
 		Name:     "auth_token",
@@ -73,36 +120,47 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func DoTheThingsHandler(w http.ResponseWriter, req *http.Request) {
+	err := verifyUser(req)
+	if err != nil {
+		fmt.Fprintf(w, "Failed to verify user: %+v", err)
+	}
+}
+
+func verifyUser(req *http.Request) error {
 	// Get token
 	var authCookie, err = req.Cookie("auth_token")
 	if err != nil || authCookie == nil || authCookie.Value == "" {
-		fmt.Fprintf(w, "Failed to find auth_token error: %+v", err)
-		return
+		return err
 	}
 	authToken := authCookie.Value
 
-	// Parse takes the token string and a function for looking up the key. The latter is especially
-	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
-	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
-	// to the callback, providing flexibility.
 	token, err := jwt.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
-		fmt.Fprintf(w, "Here #1")
-		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			fmt.Fprintf(w, "Here #3")
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-		fmt.Fprintf(w, "Here #2")
-		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return hmacSampleSecret, nil
 	})
 
-	fmt.Fprintf(w, "Here #4")
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		fmt.Fprintf(w, "Here #5")
-		fmt.Println(claims["foo"], claims["nbf"])
+		fmt.Println(claims["username"], claims["password"], claims["nbf"])
 	} else {
-		fmt.Fprintf(w, "Here #6 %+v", err)
-		fmt.Println(err)
+		return err
 	}
+	return nil
+}
+
+func connectDB() {
+	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
+		dbUser, dbPass, dbName)
+	db, err := sql.Open("postgres", dbinfo)
+	if err != nil {
+		fmt.Printf("Failed to open connection to postgres database: %+v \n", err)
+		return
+	}
+	log.Printf("Cross Pollinators Service connected to DB!")
+
+	age := 21
+	_, err = db.Query("SELECT name FROM users WHERE age = $1", age)
+
+	defer db.Close()
 }
