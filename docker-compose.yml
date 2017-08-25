@@ -1,7 +1,7 @@
 version: "2"
 
 services:
-  app:
+  api:
     build: .
     image: golang:1.8
     working_dir: /go/src/github.com/eric-kansas/cross-pollinators-server
@@ -29,3 +29,7 @@ services:
       - POSTGRES_PASSWORD=pass1234
       - POSTGRES_USER=kansas
       - POSTGRES_DB=cross-pollinators-db
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+      
