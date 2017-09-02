@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# This script is basically unnecessary at this point
+# We could bake this into the build job itself, but I left it here to not
+# break the existing build process in the interim
+export RUNTESTS="true"
+SCRIPTDIR=$(dirname $0)
+$SCRIPTDIR/build

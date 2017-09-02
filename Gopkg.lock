@@ -8,10 +8,28 @@
   version = "v3.0.0"
 
 [[projects]]
+  name = "github.com/jinzhu/gorm"
+  packages = [".","dialects/postgres"]
+  revision = "5174cc5c242a728b435ea2be8a2f7f998e15429b"
+  version = "v1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/jinzhu/inflection"
+  packages = ["."]
+  revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
+
+[[projects]]
   branch = "master"
   name = "github.com/lib/pq"
-  packages = [".","oid"]
+  packages = [".","hstore","oid"]
   revision = "e42267488fe361b9dc034be7a6bffef5b195bceb"
+
+[[projects]]
+  name = "github.com/tapjoy/beeswax-log-ingestion"
+  packages = ["configs"]
+  revision = "f0f87b620bc16da2f07a3a030f5b499adcdc3ce3"
+  version = "19"
 
 [[projects]]
   branch = "master"
@@ -22,6 +40,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a74fa8322ef950ab65959d147a498810af5d02b08af6f0766f2271bebbd8d2e7"
+  inputs-digest = "b810df2e82b927ab3b25107c1f8e3967ca664d32384bd00f620d8d68568ce19d"
   solver-name = "gps-cdcl"
   solver-version = 1

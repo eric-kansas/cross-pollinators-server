@@ -1,0 +1,37 @@
+version: '2'
+
+services:
+
+  beeswax-log-ingestion:
+    build: .
+    image: tapjoy/beeswax-log-ingestion:dev
+    networks:
+      default:
+      tapjoy.localdev:
+    environment:
+      # Standard Environment
+      AWS_ACCESS_KEY_ID:
+      AWS_SECRET_ACCESS_KEY:
+      LANG:
+      TERM:
+      # Project-specific Environment
+      NEW_RELIC_LICENSE_KEY:
+      PORT: '32785'
+    volumes:
+      - go:/go
+      - .:/go/src/github.com/tapjoy/beeswax-log-ingestion
+    ports:
+      - '32785:32785'
+    command: project_exec make compiledaemon
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - '2181:2181'
+
+networks:
+  tapjoy.localdev:
+    external: true
+
+volumes:
+  go:
