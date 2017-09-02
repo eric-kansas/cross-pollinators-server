@@ -1,11 +1,12 @@
-version: "2"
+version: "3"
 
 services:
   api:
-    build: .
+    image: golang:1.9
     working_dir: /go/src/github.com/eric-kansas/cross-pollinators-server
     volumes:
       - .:/go/src/github.com/eric-kansas/cross-pollinators-server
+    command: go run main.go
     ports:
       - '3030:3030'
     links:
@@ -25,8 +26,8 @@ services:
       - POSTGRES_USER=kansas
       - POSTGRES_DB=cross-pollinators-db
     volumes:
-      - db:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
 
 volumes:
-  db:
+  db-data:
       
