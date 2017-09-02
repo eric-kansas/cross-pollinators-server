@@ -1,7 +1,9 @@
 FROM golang:1.8
 
-ADD . /go/src/github.com/eric-kansas/cross-pollinators-server
+WORKDIR /go/src/github.com/eric-kansas/cross-pollinators-server
+COPY . .
 
-RUN go install github.com/eric-kansas/cross-pollinators-server
+RUN go-wrapper download 
+RUN go-wrapper install  
 
-ENTRYPOINT /go/bin/cross-pollinators-server
+CMD ["go-wrapper", "run"]

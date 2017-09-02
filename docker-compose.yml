@@ -2,13 +2,12 @@ version: "2"
 
 services:
   api:
-    image: golang:1.8
+    build: .
     working_dir: /go/src/github.com/eric-kansas/cross-pollinators-server
     volumes:
       - .:/go/src/github.com/eric-kansas/cross-pollinators-server
     ports:
       - '3030:3030'
-    command: go run main.go
     links:
       - db
     environment:
