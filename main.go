@@ -9,7 +9,7 @@ import (
 
 	"github.com/eric-kansas/cross-pollinators-server/api"
 	"github.com/eric-kansas/cross-pollinators-server/configs"
-	"github.com/eric-kansas/cross-pollinators-server/db"
+	"github.com/eric-kansas/cross-pollinators-server/database"
 )
 
 var httpServer = &http.Server{
@@ -21,7 +21,8 @@ var httpServer = &http.Server{
 
 func init() {
 	configs.Initialize()
-	err := db.ConnectDB()
+
+	err := database.Connect()
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %+v", err)
 	}

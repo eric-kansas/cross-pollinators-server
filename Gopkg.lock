@@ -26,12 +26,6 @@
   revision = "e42267488fe361b9dc034be7a6bffef5b195bceb"
 
 [[projects]]
-  name = "github.com/tapjoy/beeswax-log-ingestion"
-  packages = ["configs"]
-  revision = "f0f87b620bc16da2f07a3a030f5b499adcdc3ce3"
-  version = "19"
-
-[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["bcrypt","blowfish"]
@@ -40,6 +34,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b810df2e82b927ab3b25107c1f8e3967ca664d32384bd00f620d8d68568ce19d"
+  inputs-digest = "46db019af51d22f20643bc24481175298ec03dc4b2436a0f1d75fc9c0e86789a"
   solver-name = "gps-cdcl"
   solver-version = 1
