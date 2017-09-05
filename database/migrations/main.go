@@ -1,4 +1,4 @@
-package migrations
+package main
 
 import (
 	"fmt"
@@ -11,14 +11,13 @@ import (
 )
 
 const (
-	dbHost = "db"
 	dbUser = "kansas"
 	dbPass = "pass1234"
 	dbName = "cross-pollinators-db"
 )
 
 func main() {
-	dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbUser, dbPass, dbName)
+	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", dbUser, dbPass, dbName)
 
 	db, err := gorm.Open("postgres", dbinfo)
 
@@ -28,7 +27,7 @@ func main() {
 
 	log.Printf("Connected to Cross Pollinators DB!")
 
-	db.AutoMigrate(&models.User{}, &models.Intrest{}, &models.Project{})
+	db.AutoMigrate(&models.User{}, &models.Interest{}, &models.Project{}, &models.Comment{})
 
 	defer db.Close()
 }

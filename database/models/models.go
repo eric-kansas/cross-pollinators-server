@@ -1,28 +1,31 @@
 package models
 
 import (
+	"log"
+
 	"github.com/jinzhu/gorm"
+	uuid "github.com/satori/go.uuid"
 )
 
 type User struct {
 	gorm.Model
-	Email       string // user has one Email
-	Password    string // bcrypted password
-	Description string
-	Interests   []Intrest // User has many interests
-	Projects    []Project // User has many Projects
-	Location    string
+	Username  string
+	Email     string
+	Password  []byte     // bcrypted password
+	Interests []Interest // User has many interests
+	Projects  []Project  // User has many Projects
 }
 
-type Email struct {
-	OwnerID    User
-	Email      string
-	Subscribed bool
+func (user *User) BeforeCreate(scope *gorm.Scope) error {
+	log.Print("Before Create user")
+	scope.SetColumn("ID", uuid.NewV4())
+	return nil
 }
 
-type Intrest struct {
+type Interest struct {
 	gorm.Model
-	Name string
+	Name   string
+	UserID uint
 }
 
 type Project struct {
@@ -31,17 +34,14 @@ type Project struct {
 	Description string
 	Objective   string
 	Location    string
-	Photos      []byte // figure out images
 	Category    string
 	SubCategory string
-	OwnerID     User //FK: user
-	OrgName     string
 	Tags        string
+	UserID      uint
 }
 
 type Comment struct {
 	gorm.Model
-	ID        uint
 	Message   string
 	CreatedBy User    //FK: user
 	Project   Project //FK: Project

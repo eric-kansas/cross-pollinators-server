@@ -9,6 +9,9 @@ import (
 
 type crossPollinatorConfigs struct {
 	Addr    string
+	DbPass  string
+	DbName  string
+	DbUser  string
 	Verbose bool
 }
 
@@ -22,6 +25,9 @@ func Initialize() {
 	// Load in env vars
 	Data = crossPollinatorConfigs{
 		Addr:    fmt.Sprintf(":%s", getEnv("PORT", "3030")),
+		DbPass:  getEnv("POSTGRES_PASSWORD", "pass1234"),
+		DbUser:  getEnv("POSTGRES_USER", "kansas"),
+		DbName:  getEnv("POSTGRES_DB", "cross-pollinators-db"),
 		Verbose: false,
 	}
 

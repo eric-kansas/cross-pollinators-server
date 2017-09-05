@@ -6,7 +6,7 @@ services:
     working_dir: /go/src/github.com/eric-kansas/cross-pollinators-server
     volumes:
       - .:/go/src/github.com/eric-kansas/cross-pollinators-server
-    command: go run main.go
+    command: go run server.go
     ports:
       - '3030:3030'
     links:
@@ -16,6 +16,9 @@ services:
       AWS_ACCESS_KEY_ID:
       AWS_SECRET_ACCESS_KEY:
       PORT: '3030'
+      POSTGRES_PASSWORD: pass1234
+      POSTGRES_USER: kansas
+      POSTGRES_DB: cross-pollinators-db
 
   db:
     image: postgres:latest
