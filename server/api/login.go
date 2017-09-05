@@ -5,24 +5,46 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/eric-kansas/cross-pollinators-server/database"
+	"github.com/eric-kansas/cross-pollinators-server/database/models"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func LoginHandler(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
-		fmt.Fprintf(w, "Failed login not a POST")
+		logError(w, ErrNotPostRequest)
 		return
 	}
 
-	req.ParseForm()
+	err := validLoginReq(req)
+	if err != nil {
+		logError(w, err)
+		return
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		logError(w, ErrFailedToConnectToDB)
+		return
+	}
+	defer db.Close()
+
+	username := req.Form["username"][0]
 	password := []byte(req.Form["password"][0])
 
-	// get HashedPassword form data based keyed off user name
-	hashedPassword := []byte("hashed-from-database")
+	user := models.User{}
+	db.Where(&models.User{Username: username}).First(&user)
+	if user.ID == 0 {
+		logError(w, ErrUsernameNotFound)
+		return
+	}
+
 	// Comparing the password with the hash
-	err := bcrypt.CompareHashAndPassword(hashedPassword, password)
+	err = bcrypt.CompareHashAndPassword(user.Password, password)
 	if err != nil {
+		logError(w, err)
 		fmt.Fprintf(w, "Failed comparing of hashed passwords: %+v", err)
 		return
 	}
@@ -50,4 +72,17 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 		HttpOnly: false,
 	}
 	http.SetCookie(w, cookie1)
+}
+
+func validLoginReq(req *http.Request) error {
+	req.ParseForm()
+
+	if len(req.Form["username"]) == 0 || len(req.Form["username"][0]) == 0 {
+		return ErrNoUsernameProvided
+	}
+
+	if len(req.Form["password"]) == 0 || len(req.Form["password"][0]) == 0 {
+		return ErrNoPasswordProvided
+	}
+	return nil
 }
