@@ -6,9 +6,13 @@ import (
 	"log"
 	"net/http"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/eric-kansas/cross-pollinators-server/database/models"
 	"github.com/jinzhu/gorm"
 )
+
+// Move to config / .env
+var hmacSampleSecret = []byte("my_secret_key")
 
 // Errors
 var (
@@ -20,6 +24,7 @@ var (
 	ErrUsernameAlreadyTaken = errors.New("Username is already taken")
 	ErrEmailAlreadyTaken    = errors.New("Email is already taken")
 	ErrUsernameNotFound     = errors.New("Username was not found")
+	ErrParsingAuthToken     = errors.New("Error parsing auth token")
 )
 
 // Helper functions
@@ -41,7 +46,45 @@ func checkEmailExists(db *gorm.DB, req *http.Request) error {
 	return nil
 }
 
+func AuthWrapper(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := verifyUser(r)
+		if err != nil {
+			fmt.Fprintf(w, "Failed to verify user: %+v", err)
+			return
+		}
+		h.ServeHTTP(w, r) // call original
+	})
+}
+
+func verifyUser(req *http.Request) error {
+	// Get token
+	var authCookie, err = req.Cookie("auth_token")
+	if err != nil || authCookie == nil || authCookie.Value == "" {
+		return err
+	}
+	authToken := authCookie.Value
+
+	token, err := jwt.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return hmacSampleSecret, nil
+	})
+
+	if err != nil {
+		return ErrParsingAuthToken
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		fmt.Println(claims["username"], claims["password"], claims["nbf"])
+	} else {
+		return err
+	}
+	return nil
+}
+
 func logError(w http.ResponseWriter, err error) {
-	log.Printf("Failed to register: %+v", err)
-	fmt.Fprintf(w, "Failed to register: %+v", err)
+	log.Printf("Failed with error: %+v", err)
+	fmt.Fprintf(w, "Failed with error: %+v", err)
 }

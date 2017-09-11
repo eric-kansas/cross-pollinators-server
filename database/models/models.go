@@ -8,9 +8,11 @@ type User struct {
 	gorm.Model
 	Username  string
 	Email     string
-	Password  []byte     // bcrypted password
+	Password  []byte // bcrypted password
+	AvatarURL string
 	Interests []Interest // User has many interests
 	Projects  []Project  // User has many Projects
+	//Followers []User
 }
 
 type Interest struct {

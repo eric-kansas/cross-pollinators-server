@@ -8,6 +8,18 @@
   version = "v3.0.0"
 
 [[projects]]
+  name = "github.com/graphql-go/graphql"
+  packages = [".","gqlerrors","language/ast","language/kinds","language/lexer","language/location","language/parser","language/printer","language/source","language/typeInfo","language/visitor"]
+  revision = "105a6c24e6fdaf4008e56d947115a1a13dc46430"
+  version = "v0.7.2"
+
+[[projects]]
+  name = "github.com/graphql-go/handler"
+  packages = ["."]
+  revision = "07e3dd439c1f4ec14e685af7c48e8863bcc42c9d"
+  version = "v0.1.0"
+
+[[projects]]
   name = "github.com/jinzhu/gorm"
   packages = [".","dialects/postgres"]
   revision = "5174cc5c242a728b435ea2be8a2f7f998e15429b"
@@ -26,20 +38,20 @@
   revision = "e42267488fe361b9dc034be7a6bffef5b195bceb"
 
 [[projects]]
-  name = "github.com/satori/go.uuid"
-  packages = ["."]
-  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
-  version = "v1.1.0"
-
-[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["bcrypt","blowfish"]
   revision = "eb71ad9bd329b5ac0fd0148dd99bd62e8be8e035"
 
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "66aacef3dd8a676686c7ae3716979581e8b03c47"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0a77a6a53781d2b7d540638205b5fb374844ad50e307e1acff6e9fd280048eb2"
+  inputs-digest = "9699bcc1c4b1804374f206c051ec19d9fd3348d41cffbcde736e70709c6db6ce"
   solver-name = "gps-cdcl"
   solver-version = 1

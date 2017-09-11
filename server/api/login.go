@@ -45,7 +45,6 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 	err = bcrypt.CompareHashAndPassword(user.Password, password)
 	if err != nil {
 		logError(w, err)
-		fmt.Fprintf(w, "Failed comparing of hashed passwords: %+v", err)
 		return
 	}
 
@@ -72,6 +71,7 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 		HttpOnly: false,
 	}
 	http.SetCookie(w, cookie1)
+	fmt.Fprintf(w, "Success")
 }
 
 func validLoginReq(req *http.Request) error {
