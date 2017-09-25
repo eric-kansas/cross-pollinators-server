@@ -10,5 +10,4 @@ func GraphQLHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Fprintf(w, "Failed to verify user: %+v", err)
 	}
-
 }
