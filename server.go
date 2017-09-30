@@ -10,6 +10,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 
+	"github.com/eric-kansas/cross-pollinators-server/database"
 	"github.com/eric-kansas/cross-pollinators-server/database/models"
 	"github.com/eric-kansas/cross-pollinators-server/server/api"
 	"github.com/eric-kansas/cross-pollinators-server/server/configs"
@@ -87,6 +88,7 @@ func setupAPI() {
 		followed_by: [User]!
 		tags: [Tag]!
 	*/
+
 	projectType := graphql.NewObject(graphql.ObjectConfig{
 		Name:        "Project",
 		Description: "Project object",
@@ -94,14 +96,42 @@ func setupAPI() {
 			"id": &graphql.Field{
 				Type:        graphql.Int,
 				Description: "Project ID",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						return project.ID, nil
+					}
+					return "Sad", nil
+				},
 			},
 			"name": &graphql.Field{
 				Type:        graphql.String,
 				Description: "Text content of the project",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						return project.Name, nil
+					}
+					return "Sad", nil
+				},
+			},
+			"description": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Description of the project",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						return project.Description, nil
+					}
+					return "No description", nil
+				},
 			},
 			"header": &graphql.Field{
 				Type:        graphql.String,
 				Description: "Text content of the project",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						return project.Name, nil
+					}
+					return "Sad", nil
+				},
 			},
 			"sub_header": &graphql.Field{
 				Type:        graphql.String,
@@ -157,18 +187,30 @@ func setupAPI() {
 
 	// define GraphQL schema using relay library helpers
 	fields := graphql.Fields{
-		"discover": &graphql.Field{
-			Type:        projectType,
-			Description: "List of projects to discover",
+		"hello": &graphql.Field{
+			Type:        graphql.String,
+			Description: "Hello world",
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				// get value of `limit` arg
-				/*limit := 10
-				if v, ok := p.Args["limit"].(int); ok {
-					limit = v
+				return "world", nil
+			},
+		},
+		"discover": &graphql.Field{
+			Type:        graphql.NewList(projectType),
+			Description: "List of projects to discover",
+			Args: graphql.FieldConfigArgument{
+				"first": &graphql.ArgumentConfig{
+					Type:         graphql.Int,
+					DefaultValue: 10,
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				first := 10
+				if v, ok := p.Args["first"].(int); ok {
+					first = v
 				}
-				return data.GetPosts(limit)
-				*/
-				return models.Project{}, nil
+				log.Printf("first: %d", first)
+
+				return database.GetProjects("testing12345", first)
 			},
 		},
 	}

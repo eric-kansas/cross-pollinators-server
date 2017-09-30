@@ -48,11 +48,14 @@ func checkEmailExists(db *gorm.DB, req *http.Request) error {
 
 func AuthWrapper(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := verifyUser(r)
-		if err != nil {
-			fmt.Fprintf(w, "Failed to verify user: %+v", err)
-			return
-		}
+		log.Printf("Kansas: %+v", r)
+		/*
+			err := verifyUser(r)
+			if err != nil {
+				fmt.Fprintf(w, "Failed to verify user: %+v", err)
+				return
+			}
+		*/
 		h.ServeHTTP(w, r) // call original
 	})
 }
