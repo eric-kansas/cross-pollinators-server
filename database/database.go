@@ -63,3 +63,21 @@ func GetProjects(username string, amount int) ([]models.Project, error) {
 		)*/
 	return projects, nil
 }
+
+func GetUser(userID uint) (models.User, error) {
+	db, err := Connect()
+	if err != nil {
+		return models.User{}, err
+	}
+	defer db.Close()
+
+	user := models.User{}
+	user.ID = userID
+
+	db.Find(&user)
+	if user.ID == 0 {
+		return models.User{}, fmt.Errorf("failed to find user")
+	}
+
+	return user, nil
+}

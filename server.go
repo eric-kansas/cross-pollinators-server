@@ -49,10 +49,43 @@ func setupAPI() {
 		Description: "A user in cross pollinators",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
-				Type:        graphql.NewNonNull(graphql.String),
-				Description: "The id of the droid.",
+				Type:        graphql.NewNonNull(graphql.ID),
+				Description: "The id of the user.",
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					return nil, nil
+					if user, ok := p.Source.(models.User); ok {
+						return user.ID, nil
+					}
+					return "Sad", nil
+				},
+			},
+			"full_name": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Users full name",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if user, ok := p.Source.(models.User); ok {
+						return user.Username, nil
+					}
+					return "Sad", nil
+				},
+			},
+			"avatar_url": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Avatar url",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if user, ok := p.Source.(models.User); ok {
+						return user.Username, nil
+					}
+					return "Sad", nil
+				},
+			},
+			"organization": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Organization user is a part of",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if user, ok := p.Source.(models.User); ok {
+						return user.Organization, nil
+					}
+					return "Sad", nil
 				},
 			},
 		},
@@ -94,7 +127,7 @@ func setupAPI() {
 		Description: "Project object",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
-				Type:        graphql.Int,
+				Type:        graphql.ID,
 				Description: "Project ID",
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if project, ok := p.Source.(models.Project); ok {
@@ -123,28 +156,26 @@ func setupAPI() {
 					return "No description", nil
 				},
 			},
-			"header": &graphql.Field{
+			"objective": &graphql.Field{
 				Type:        graphql.String,
-				Description: "Text content of the project",
+				Description: "Text objective of the project",
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if project, ok := p.Source.(models.Project); ok {
-						return project.Name, nil
+						return project.Objective, nil
 					}
-					return "Sad", nil
+					return "No objective... Lets talk!", nil
 				},
-			},
-			"sub_header": &graphql.Field{
-				Type:        graphql.String,
-				Description: "Text content of the project",
-			},
-			"body": &graphql.Field{
-				Type:        graphql.String,
-				Description: "Text content of the project",
 			},
 			"author": &graphql.Field{
 				Type:        userType,
 				Description: "Author of the post",
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						user, err := database.GetUser(project.UserID)
+						if err == nil {
+							return user, nil
+						}
+					}
 					return nil, nil
 				},
 			},
