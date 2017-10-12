@@ -29,9 +29,6 @@ func GetProject() (models.Project, error) {
 }
 
 func GetProjects(username string, amount int) ([]models.Project, error) {
-
-	// TODO: DO database call
-
 	db, err := Connect()
 	if err != nil {
 		return nil, err

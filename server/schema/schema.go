@@ -1,189 +1,255 @@
 package schema
 
 import (
+	"log"
+
+	"github.com/eric-kansas/cross-pollinators-server/database"
+	"github.com/eric-kansas/cross-pollinators-server/database/models"
 	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/handler"
 )
 
 var Root graphql.Schema
-var PostType *graphql.Object
-var UserType *graphql.Object
 
 func init() {
-	UserType = graphql.NewObject(graphql.ObjectConfig{
+	userType := graphql.NewObject(graphql.ObjectConfig{
 		Name:        "User",
-		Description: "User object",
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
-			return graphql.Fields{
-				"id": &graphql.Field{
-					Type:        graphql.Int,
-					Description: "User ID",
-				},
-				"username": &graphql.Field{
-					Type:        graphql.String,
-					Description: "User's username",
-				},
-				"avatar_url": &graphql.Field{
-					Type:        graphql.String,
-					Description: "Relative URL to user's avatar",
-				},
-				"followers": &graphql.Field{
-					Type:        graphql.NewList(UserType),
-					Description: "User's list of followers",
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						if user, ok := p.Source.(*microblog.User); ok {
-							// retrieve list of friends for given user id
-							return data.GetFollowersForUser(user.ID)
-						}
-						return nil, nil
-					},
-				},
-				"friends": &graphql.Field{
-					Type:        graphql.NewList(UserType),
-					Description: "User's list of friends",
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						if user, ok := p.Source.(*microblog.User); ok {
-							// retrieve list of friends for given user id
-							return data.GetFriendsForUser(user.ID)
-						}
-						return nil, nil
-					},
-				},
-				"posts": &graphql.Field{
-					Type:        graphql.NewList(PostType),
-					Description: "User's list of posts",
-					Args: graphql.FieldConfigArgument{
-						"limit": &graphql.ArgumentConfig{
-							Type:         graphql.Int,
-							DefaultValue: 10,
-						},
-					},
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						// get value of `limit` arg
-						limit := 10
-						if v, ok := p.Args["limit"].(int); ok {
-							limit = v
-						}
-						if user, ok := p.Source.(*microblog.User); ok {
-							// retrieve list of posts for given user id
-							return data.GetPostsForUser(user.ID, limit)
-						}
-						return nil, nil
-					},
-				},
-			}
-		}),
-	})
-
-	Interests []Interest // User has many interests
-	Projects  []Project  // User has many Projects
-
-	PostType = graphql.NewObject(graphql.ObjectConfig{
-		Name:        "Post",
-		Description: "Post object",
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
-			return graphql.Fields{
-				"id": &graphql.Field{
-					Type:        graphql.Int,
-					Description: "Post ID",
-				},
-				"content": &graphql.Field{
-					Type:        graphql.String,
-					Description: "Text content of the post",
-				},
-				"author": &graphql.Field{
-					Type:        UserType,
-					Description: "Author of the post",
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						if post, ok := p.Source.(*microblog.Post); ok {
-							// retrieve list of user for given id
-							return data.GetUser(post.AuthorID)
-						}
-						return nil, nil
-					},
-				},
-				"total_likes": &graphql.Field{
-					Type:        graphql.Int,
-					Description: "Number of users who liked the post",
-				},
-				"liked_by": &graphql.Field{
-					Type:        graphql.NewList(UserType),
-					Description: "List of users who liked the post",
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						if post, ok := p.Source.(*microblog.Post); ok {
-							// retrieve list of users that like the post for given post id
-							return data.GetLikedByForPost(post.ID)
-						}
-						return nil, nil
-					},
-				},
-			}
-		}),
-	})
-
-	var err error
-	Root, err = graphql.NewSchema(graphql.SchemaConfig{
-		Query: graphql.NewObject(graphql.ObjectConfig{
-			Name:        "RootQuery",
-			Description: "Root for all query objects on our GraphQL server",
-			Fields: graphql.Fields{
-				"posts": &graphql.Field{
-					Type:        graphql.NewList(PostType),
-					Description: "Get list of posts",
-					Args: graphql.FieldConfigArgument{
-						"limit": &graphql.ArgumentConfig{
-							Type:         graphql.Int,
-							DefaultValue: 10,
-						},
-					},
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						// get value of `limit` arg
-						limit := 10
-						if v, ok := p.Args["limit"].(int); ok {
-							limit = v
-						}
-						return data.GetPosts(limit)
-					},
-				},
-				"post": &graphql.Field{
-					Type:        PostType,
-					Description: "Get a single post",
-					Args: graphql.FieldConfigArgument{
-						"id": &graphql.ArgumentConfig{
-							Type: graphql.Int,
-						},
-					},
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						// get value of `id` arg
-						id := 0
-						if v, ok := p.Args["id"].(int); ok {
-							id = v
-						}
-						return data.GetPost(id)
-					},
-				},
-				"user": &graphql.Field{
-					Type:        UserType,
-					Description: "Get a single user",
-					Args: graphql.FieldConfigArgument{
-						"id": &graphql.ArgumentConfig{
-							Type: graphql.Int,
-						},
-					},
-					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						// get value of `id` arg
-						id := 0
-						if v, ok := p.Args["id"].(int); ok {
-							id = v
-						}
-						// retrieve user for given id from data source
-						return data.GetUser(id)
-					},
+		Description: "A user in cross pollinators",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type:        graphql.NewNonNull(graphql.ID),
+				Description: "The id of the user.",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if user, ok := p.Source.(models.User); ok {
+						return user.ID, nil
+					}
+					return "Sad", nil
 				},
 			},
-		}),
+			"full_name": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Users full name",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if user, ok := p.Source.(models.User); ok {
+						return user.Username, nil
+					}
+					return "Sad", nil
+				},
+			},
+			"avatar_url": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Avatar url",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if user, ok := p.Source.(models.User); ok {
+						return user.Username, nil
+					}
+					return "Sad", nil
+				},
+			},
+			"organization": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Organization user is a part of",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if user, ok := p.Source.(models.User); ok {
+						return user.Organization, nil
+					}
+					return "Sad", nil
+				},
+			},
+		},
 	})
-	if err != nil {
-		panic(err)
+
+	tagEnum := graphql.NewEnum(graphql.EnumConfig{
+		Name:        "Episode",
+		Description: "One of the films in the Star Wars Trilogy",
+		Values: graphql.EnumValueConfigMap{
+			"Tag1": &graphql.EnumValueConfig{
+				Value:       1,
+				Description: "Tag 1.",
+			},
+			"Tag2": &graphql.EnumValueConfig{
+				Value:       2,
+				Description: "Tag 2.",
+			},
+			"Tag3": &graphql.EnumValueConfig{
+				Value:       3,
+				Description: "Tag 3.",
+			},
+		},
+	})
+
+	/*
+		id: ID!
+		name: String!
+		header: String!
+		sub_header: String!
+		body: String!
+		header_img_url: String!
+		author: Author!
+		followed_by: [User]!
+		tags: [Tag]!
+	*/
+
+	projectType := graphql.NewObject(graphql.ObjectConfig{
+		Name:        "Project",
+		Description: "Project object",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type:        graphql.ID,
+				Description: "Project ID",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						return project.ID, nil
+					}
+					return "Sad", nil
+				},
+			},
+			"name": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Text content of the project",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						return project.Name, nil
+					}
+					return "Sad", nil
+				},
+			},
+			"description": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Description of the project",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						return project.Description, nil
+					}
+					return "No description", nil
+				},
+			},
+			"objective": &graphql.Field{
+				Type:        graphql.String,
+				Description: "Text objective of the project",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						return project.Objective, nil
+					}
+					return "No objective... Lets talk!", nil
+				},
+			},
+			"author": &graphql.Field{
+				Type:        userType,
+				Description: "Author of the post",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if project, ok := p.Source.(models.Project); ok {
+						user, err := database.GetUser(project.UserID)
+						if err == nil {
+							return user, nil
+						}
+					}
+					return nil, nil
+				},
+			},
+			"followed_by": &graphql.Field{
+				Type:        graphql.NewList(userType),
+				Description: "List of users who liked the project",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return nil, nil
+				},
+			},
+			"tags": &graphql.Field{
+				Type:        graphql.NewList(tagEnum),
+				Description: "List of users who liked the project",
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return nil, nil
+				},
+			},
+		},
+	})
+
+	/*
+	   discover (user: user-id) {
+	   	projects: (first: 10) [
+	   		project {
+	   			header_img_url:
+	   			header:
+	   			sub_header:
+	   			body:
+	   			author: {
+	   				avatar_url:
+	   				username:
+	   				organization:
+	   			}
+	   			tags: ["tag1","tag2"]
+	   		},
+	   		...
+	   	]
+	   }
+	*/
+
+	// define GraphQL schema using relay library helpers
+	fields := graphql.Fields{
+		"discover": &graphql.Field{
+			Type:        graphql.NewList(projectType),
+			Description: "List of projects to discover",
+			Args: graphql.FieldConfigArgument{
+				"first": &graphql.ArgumentConfig{
+					Type:         graphql.Int,
+					DefaultValue: 10,
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				first := 10
+				if v, ok := p.Args["first"].(int); ok {
+					first = v
+				}
+
+				log.Printf("resolve: %v+", p.Context)
+
+				return database.GetProjects("testing12345", first)
+			},
+		},
+
+		"following": &graphql.Field{
+			Type:        graphql.NewList(projectType),
+			Description: "List of projects to discover",
+			Args: graphql.FieldConfigArgument{
+				"first": &graphql.ArgumentConfig{
+					Type:         graphql.Int,
+					DefaultValue: 10,
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				first := 10
+				if v, ok := p.Args["first"].(int); ok {
+					first = v
+				}
+
+				return database.GetProjects("testing12345", first)
+			},
+		},
+
+		"user": &graphql.Field{
+			Type:        graphql.NewList(projectType),
+			Description: "List of projects to discover",
+			Args: graphql.FieldConfigArgument{
+				"first": &graphql.ArgumentConfig{
+					Type:         graphql.Int,
+					DefaultValue: 10,
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				first := 10
+				if v, ok := p.Args["first"].(int); ok {
+					first = v
+				}
+
+				return database.GetProjects("testing12345", first)
+			},
+		},
 	}
+
+	rootQuery := graphql.ObjectConfig{
+		Name:   "RootQuery",
+		Fields: fields,
+	}
+
+	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}
+	Root, _ = graphql.NewSchema(schemaConfig)
 }

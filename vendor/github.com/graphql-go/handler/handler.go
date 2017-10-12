@@ -9,7 +9,7 @@ import (
 
 	"github.com/graphql-go/graphql"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 const (
@@ -20,8 +20,9 @@ const (
 
 type Handler struct {
 	Schema *graphql.Schema
-	
-	pretty bool
+
+	pretty   bool
+	graphiql bool
 }
 type RequestOptions struct {
 	Query         string                 `json:"query" url:"query" schema:"query"`
@@ -129,7 +130,18 @@ func (h *Handler) ContextHandler(ctx context.Context, w http.ResponseWriter, r *
 	}
 	result := graphql.Do(params)
 
-	
+	if h.graphiql {
+		acceptHeader := r.Header.Get("Accept")
+		_, raw := r.URL.Query()["raw"]
+		if !raw && !strings.Contains(acceptHeader, "application/json") && strings.Contains(acceptHeader, "text/html") {
+			renderGraphiQL(w, params)
+			return
+		}
+	}
+
+	// use proper JSON Header
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
+
 	if h.pretty {
 		w.WriteHeader(http.StatusOK)
 		buff, _ := json.MarshalIndent(result, "", "\t")
@@ -138,25 +150,27 @@ func (h *Handler) ContextHandler(ctx context.Context, w http.ResponseWriter, r *
 	} else {
 		w.WriteHeader(http.StatusOK)
 		buff, _ := json.Marshal(result)
-	
+
 		w.Write(buff)
 	}
 }
 
 // ServeHTTP provides an entrypoint into executing graphQL queries.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.ContextHandler(context.Background(), w, r)
+	h.ContextHandler(r.Context(), w, r)
 }
 
 type Config struct {
-	Schema *graphql.Schema
-	Pretty bool
+	Schema   *graphql.Schema
+	Pretty   bool
+	GraphiQL bool
 }
 
 func NewConfig() *Config {
 	return &Config{
-		Schema: nil,
-		Pretty: true,
+		Schema:   nil,
+		Pretty:   true,
+		GraphiQL: true,
 	}
 }
 
@@ -169,7 +183,8 @@ func New(p *Config) *Handler {
 	}
 
 	return &Handler{
-		Schema: p.Schema,
-		pretty: p.Pretty,
+		Schema:   p.Schema,
+		pretty:   p.Pretty,
+		graphiql: p.GraphiQL,
 	}
 }

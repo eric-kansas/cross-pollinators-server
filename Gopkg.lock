@@ -10,14 +10,14 @@
 [[projects]]
   name = "github.com/graphql-go/graphql"
   packages = [".","gqlerrors","language/ast","language/kinds","language/lexer","language/location","language/parser","language/printer","language/source","language/typeInfo","language/visitor"]
-  revision = "105a6c24e6fdaf4008e56d947115a1a13dc46430"
-  version = "v0.7.2"
+  revision = "0c7d73fea519ce6751ecb4d5835c5a87a384cf6c"
+  version = "v0.7.3"
 
 [[projects]]
   name = "github.com/graphql-go/handler"
   packages = ["."]
-  revision = "07e3dd439c1f4ec14e685af7c48e8863bcc42c9d"
-  version = "v0.1.0"
+  revision = "fb144b8b1e2e8ad591a72a481c3042212a5ddc2e"
+  version = "v0.2.0"
 
 [[projects]]
   name = "github.com/jinzhu/gorm"
@@ -35,19 +35,13 @@
   branch = "master"
   name = "github.com/lib/pq"
   packages = [".","hstore","oid"]
-  revision = "e42267488fe361b9dc034be7a6bffef5b195bceb"
+  revision = "b77235e3890a962fe8a6f8c4c7198679ca7814e7"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["bcrypt","blowfish"]
-  revision = "eb71ad9bd329b5ac0fd0148dd99bd62e8be8e035"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = ["context"]
-  revision = "66aacef3dd8a676686c7ae3716979581e8b03c47"
+  revision = "9419663f5a44be8b34ca85f08abc5fe1be11f8a3"
 
 [solve-meta]
   analyzer-name = "dep"

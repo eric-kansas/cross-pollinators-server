@@ -31,13 +31,13 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	defer db.Close()
 
-	username := req.Form["username"][0]
+	email := req.Form["email"][0]
 	password := []byte(req.Form["password"][0])
 
 	user := models.User{}
-	db.Where(&models.User{Username: username}).First(&user)
+	db.Where(&models.User{Email: email}).First(&user)
 	if user.ID == 0 {
-		logError(w, ErrUsernameNotFound)
+		logError(w, ErrEmailNotFound)
 		return
 	}
 
@@ -51,8 +51,9 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": req.Form["username"],
-		"nbf":      time.Date(2017, 6, 20, 12, 0, 0, 0, time.UTC).Unix(),
+		"email": req.Form["email"],
+		"id":    user.ID,
+		"nbf":   time.Date(2017, 6, 20, 12, 0, 0, 0, time.UTC).Unix(),
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
@@ -77,8 +78,8 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 func validLoginReq(req *http.Request) error {
 	req.ParseForm()
 
-	if len(req.Form["username"]) == 0 || len(req.Form["username"][0]) == 0 {
-		return ErrNoUsernameProvided
+	if len(req.Form["email"]) == 0 || len(req.Form["email"][0]) == 0 {
+		return ErrNoEmailProvided
 	}
 
 	if len(req.Form["password"]) == 0 || len(req.Form["password"][0]) == 0 {

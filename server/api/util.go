@@ -17,15 +17,26 @@ var hmacSampleSecret = []byte("my_secret_key")
 // Errors
 var (
 	ErrNotPostRequest       = errors.New("Request method should be POST")
-	ErrNoUsernameProvided   = errors.New("No username provided")
 	ErrNoPasswordProvided   = errors.New("No password provided")
 	ErrNoEmailProvided      = errors.New("No email provided")
 	ErrFailedToConnectToDB  = errors.New("Failed to connect to database")
 	ErrUsernameAlreadyTaken = errors.New("Username is already taken")
 	ErrEmailAlreadyTaken    = errors.New("Email is already taken")
-	ErrUsernameNotFound     = errors.New("Username was not found")
+	ErrEmailNotFound        = errors.New("Email was not found")
 	ErrParsingAuthToken     = errors.New("Error parsing auth token")
 )
+
+func AuthWrapper(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := GetUserID(r)
+		if err != nil {
+			fmt.Fprintf(w, "Failed to verify user: %+v", err)
+			return
+		}
+
+		h.ServeHTTP(w, r) // call original
+	})
+}
 
 // Helper functions
 func checkUsernameExists(db *gorm.DB, req *http.Request) error {
@@ -46,25 +57,11 @@ func checkEmailExists(db *gorm.DB, req *http.Request) error {
 	return nil
 }
 
-func AuthWrapper(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Kansas: %+v", r)
-		/*
-			err := verifyUser(r)
-			if err != nil {
-				fmt.Fprintf(w, "Failed to verify user: %+v", err)
-				return
-			}
-		*/
-		h.ServeHTTP(w, r) // call original
-	})
-}
-
-func verifyUser(req *http.Request) error {
+func GetUserID(req *http.Request) (string, error) {
 	// Get token
 	var authCookie, err = req.Cookie("auth_token")
 	if err != nil || authCookie == nil || authCookie.Value == "" {
-		return err
+		return "", err
 	}
 	authToken := authCookie.Value
 
@@ -76,15 +73,14 @@ func verifyUser(req *http.Request) error {
 	})
 
 	if err != nil {
-		return ErrParsingAuthToken
+		return "", ErrParsingAuthToken
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		fmt.Println(claims["username"], claims["password"], claims["nbf"])
-	} else {
-		return err
+		fmt.Println(claims["username"], claims["id"], claims["nbf"])
+		return claims["id"].(string), nil
 	}
-	return nil
+	return "", err
 }
 
 func logError(w http.ResponseWriter, err error) {

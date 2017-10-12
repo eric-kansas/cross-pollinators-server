@@ -46,7 +46,6 @@ func RegisterHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	user := models.User{
-		Username: req.Form["username"][0],
 		Email:    req.Form["email"][0],
 		Password: hashedPassword, // bcrypted password
 	}
@@ -61,10 +60,6 @@ func RegisterHandler(w http.ResponseWriter, req *http.Request) {
 func validRegisterReq(req *http.Request) error {
 	req.ParseForm()
 
-	if len(req.Form["username"]) == 0 || len(req.Form["username"][0]) == 0 {
-		return ErrNoUsernameProvided
-	}
-
 	if len(req.Form["email"]) == 0 || len(req.Form["email"][0]) == 0 {
 		return ErrNoEmailProvided
 	}
@@ -77,13 +72,6 @@ func validRegisterReq(req *http.Request) error {
 
 func checkUserExistance(db *gorm.DB, req *http.Request) error {
 	var user models.User
-	db.Where(models.User{Username: req.Form["username"][0]}).First(&user)
-	if user.ID != 0 {
-		return ErrUsernameAlreadyTaken
-	}
-
-	user = models.User{}
-
 	db.Where(models.User{Email: req.Form["email"][0]}).First(&user)
 	if user.ID != 0 {
 		return ErrEmailAlreadyTaken
