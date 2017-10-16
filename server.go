@@ -39,7 +39,7 @@ func setupAPI() {
 	http.HandleFunc("/login", api.LoginHandler)
 	http.HandleFunc("/register", api.RegisterHandler)
 
-	http.Handle("/graphql", api.GraphQLHander(false))
+	http.Handle("/graphql", api.GraphQLHander(true))
 
 	httpServer.Handler = mux
 }

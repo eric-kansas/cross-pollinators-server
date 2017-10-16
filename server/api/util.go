@@ -57,11 +57,11 @@ func checkEmailExists(db *gorm.DB, req *http.Request) error {
 	return nil
 }
 
-func GetUserID(req *http.Request) (string, error) {
+func GetUserID(req *http.Request) (uint, error) {
 	// Get token
 	var authCookie, err = req.Cookie("auth_token")
 	if err != nil || authCookie == nil || authCookie.Value == "" {
-		return "", err
+		return 0, err
 	}
 	authToken := authCookie.Value
 
@@ -73,14 +73,20 @@ func GetUserID(req *http.Request) (string, error) {
 	})
 
 	if err != nil {
-		return "", ErrParsingAuthToken
+		return 0, ErrParsingAuthToken
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		fmt.Println(claims["username"], claims["id"], claims["nbf"])
-		return claims["id"].(string), nil
+		if id, ok := claims["id"].(uint); ok {
+			return id, nil
+		}
+
+		if id, ok := claims["id"].(float64); ok {
+			return uint(id), nil
+		}
 	}
-	return "", err
+	return 0, err
 }
 
 func logError(w http.ResponseWriter, err error) {

@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/eric-kansas/cross-pollinators-server/database"
@@ -54,6 +55,8 @@ func RegisterHandler(w http.ResponseWriter, req *http.Request) {
 	if db.NewRecord(user) {
 		db.Create(&user)
 	}
+
+	log.Printf("Register email: %s", req.Form["email"][0])
 	fmt.Fprintf(w, "Success")
 }
 

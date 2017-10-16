@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/eric-kansas/cross-pollinators-server/server/schema"
@@ -20,6 +21,7 @@ func GraphQLHander(auth bool) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			username, err := GetUserID(r)
 			if err != nil {
+				log.Printf("Failed to verify user: %+v", err)
 				fmt.Fprintf(w, "Failed to verify user: %+v", err)
 				return
 			}

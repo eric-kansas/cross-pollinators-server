@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"log"
-
 	"github.com/eric-kansas/cross-pollinators-server/database"
 	"github.com/eric-kansas/cross-pollinators-server/database/models"
 	"github.com/graphql-go/graphql"
@@ -199,8 +197,6 @@ func init() {
 				if v, ok := p.Args["first"].(int); ok {
 					first = v
 				}
-
-				log.Printf("resolve: %v+", p.Context)
 
 				return database.GetProjects("testing12345", first)
 			},
